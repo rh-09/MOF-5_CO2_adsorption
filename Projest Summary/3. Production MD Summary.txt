@@ -1,0 +1,7 @@
+   1. System: MOF-5 (rigid UFF) + 20 CO₂ (TraPPE, rigid)
+   2. Ensemble: NVE
+   3. Production time: 5 ns (5,000,000 steps; 1 fs timestep)
+   4. Diffusive fit window: 1147–1661 ps
+   5. Self-diffusion coefficient: 6.74 × 10⁻⁵ cm² s⁻¹
+   6. Block-averaged D: (7.70 ± 1.64) × 10⁻⁵ cm² s⁻¹
+   7. Observations: Continuous Fickian diffusion with no trapped CO₂ molecules; moderate statistical anisotropy indicates additional sampling (longer or replicate runs) would improve convergence.

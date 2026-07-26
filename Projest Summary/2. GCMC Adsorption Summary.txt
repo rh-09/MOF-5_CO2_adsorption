@@ -1,0 +1,9 @@
+   1. System: MOF-5 + CO₂ (UFF/TraPPE)
+   2. Ensemble: Grand Canonical Monte Carlo (GCMC)
+   3. Production cycles: 50,000
+   4. Average CO₂ loading: 19.17 ± 0.18 molecules/unit cell
+   5. Adsorption capacity: 30.43 ± 0.29 mg g⁻¹ (0.6915 ± 0.0065 mol kg⁻¹)
+   6. Heat of adsorption: −13.46 ± 0.15 kJ mol⁻¹
+   7. Average Host–CO₂ interaction energy: −24,654.7 ± 269 K
+   8. Average CO₂–CO₂ interaction energy: −481.9 ± 14.6 K
+   9. Remarks: Stable adsorption with negligible energy drift and an effectively neutral system, providing a well-equilibrated configuration for subsequent MD diffusion simulations.

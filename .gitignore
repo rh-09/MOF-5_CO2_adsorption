@@ -1,0 +1,10 @@
+﻿# LAMMPS
+*.dump
+*.lammpstrj
+*.restart
+
+# RASPA generated files
+RAPSA2/Movies/
+RAPSA2/VTK/
+RAPSA2/Restart/
+RAPSA2/Output/

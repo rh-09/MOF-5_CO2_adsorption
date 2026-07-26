@@ -1,0 +1,7 @@
+   1. Material: MOF-5 (IRMOF-1)
+   2. Framework: Fully rigid/frozen
+   3. Force field: UFF for the framework
+   4. Adsorbate: CO₂ molecules modeled using the TraPPE force field
+   5. Simulation cell: 3 × 3 × 2 supercell (55.26 × 55.26 × 36.84 Å³)
+   6. Electrostatics: Ewald summation
+   7. Objective: Investigate CO₂ adsorption and self-diffusion in MOF-5 using a multiscale GCMC–MD simulation approach.

@@ -1,0 +1,65 @@
+# =====================================================================
+# Stage 1: Energy minimization
+# System: MOF-5 (UFF, frozen) + CO2 (TraPPE, rigid, GCMC-loaded from RASPA2)
+# =====================================================================
+
+units           real
+atom_style      full
+boundary        p p p
+
+# --- Force field style declarations -----------------------------------
+# ASSUMPTIONS -- confirm against your earlier working preamble:
+pair_style      lj/cut/coul/long 12.0
+pair_modify     mix arithmetic tail yes
+
+bond_style      harmonic
+angle_style     hybrid fourier cosine/periodic
+dihedral_style  harmonic
+improper_style  fourier
+
+special_bonds   lj/coul 0.0 0.0 1.0
+
+# --- Read initial structure (RASPA2-generated, rigid CO2 geometry) -----
+read_data      data.MOF-5_loaded_CO2
+
+# kspace_style must be (re)declared after read_data for a triclinic box --
+# LAMMPS only knows the box is triclinic once read_data has parsed the
+# xy/xz/yz tilt factors, so PPPM has to be set up after that point.
+kspace_style    pppm 1.0e-4
+
+# --- Define groups ------------------------------------------------------
+group           framework type 1 2 3 4 5
+group           co2       type 6 7
+
+# --- Freeze framework completely (per your instruction) -----------------
+# minimize moves ALL atoms by default regardless of fix nve status,
+# so setforce is required here even though framework gets no integrator
+# in later dynamics stages.
+fix             freeze_frame framework setforce 0.0 0.0 0.0
+
+# --- Keep each CO2 rigid during minimization -----------------------------
+# fix rigid/small moves each body via its aggregate force/torque (COM +
+# orientation only) rather than moving the 3 atoms independently, so the
+# C-O bond lengths / geometry are preserved through minimization.
+fix             co2_rigid co2 rigid/small molecule
+
+# --- Output settings ------------------------------------------------------
+thermo_style    custom step pe ke etotal press fmax fnorm
+thermo          10
+
+dump            d1 all custom 50 min.dump id type x y z
+dump_modify     d1 sort id
+
+# --- Minimize ---------------------------------------------------------------
+min_style       cg
+minimize        1.0e-6 1.0e-8 10000 100000
+
+# --- Sanity check: print CO2 bond lengths so you can confirm geometry
+# was preserved (should stay close to 1.16 A, the TraPPE C=O bond length)
+# Check this manually against min.dump or the log after running.
+
+# --- Save state for the next stage -------------------------------------------
+write_restart   min.restart
+write_data      min_out.data
+
+print "Stage 1 (minimization) complete. Check log for fmax/fnorm convergence and inspect min.dump to verify CO2 geometry was preserved."

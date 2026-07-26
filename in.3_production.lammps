@@ -1,0 +1,116 @@
+# =====================================================================
+# Stage 3: Production run for CO2 self-diffusion in rigid MOF-5
+# Framework : UFF (fully frozen)
+# CO2       : TraPPE rigid molecules
+# Ensemble  : NVE
+# =====================================================================
+
+units           real
+atom_style      full
+boundary        p p p
+
+# ---------------------------------------------------------------------
+# Read equilibrated configuration
+# ---------------------------------------------------------------------
+
+read_restart    nvt.restart
+reset_timestep  0
+
+# PPPM must always be redefined after reading a restart
+kspace_style    pppm 1.0e-4
+
+# Angle styles are not always restored correctly
+angle_style     hybrid fourier cosine/periodic
+
+angle_coeff     1 fourier          179.021796  0.343737  0.374972  0.281246
+angle_coeff     2 fourier          172.607259  0.343737  0.374972  0.281246
+angle_coeff     3 cosine/periodic  131.755710  -1  3
+angle_coeff     4 cosine/periodic  187.136328  -1  3
+angle_coeff     5 cosine/periodic  102.183280  -1  3
+angle_coeff     6 cosine/periodic  111.297508  -1  3
+angle_coeff     7 cosine/periodic   57.289016  -1  3
+angle_coeff     8 cosine/periodic   23.613368  -1  3
+angle_coeff     9 cosine/periodic   60.877639  -1  3
+
+# ---------------------------------------------------------------------
+# Groups
+# ---------------------------------------------------------------------
+
+group framework type 1 2 3 4 5
+group co2 type 6 7
+
+# ---------------------------------------------------------------------
+# Freeze framework
+# ---------------------------------------------------------------------
+
+velocity framework set 0.0 0.0 0.0
+
+fix freeze_frame framework setforce 0.0 0.0 0.0
+
+# ---------------------------------------------------------------------
+# Integrate rigid CO2 molecules (NVE)
+# ---------------------------------------------------------------------
+
+fix rig co2 rigid/nve/small molecule
+
+# ---------------------------------------------------------------------
+# Temperature monitor (diagnostic only)
+# ---------------------------------------------------------------------
+
+compute co2_temp co2 temp
+fix_modify rig temp co2_temp
+
+# ---------------------------------------------------------------------
+# Time step
+# ---------------------------------------------------------------------
+
+timestep 1.0
+
+# =====================================================================
+# Diffusion diagnostics
+# =====================================================================
+
+# ---------------------------------------------------
+# Quick atom MSD (diagnostic only)
+# ---------------------------------------------------
+
+compute msd_co2 co2 msd
+
+fix msd_out co2 ave/time 1000 1 1000 c_msd_co2[4] file msd_quick.txt title1 "# Step MSD(atom)"
+
+# ---------------------------------------------------
+# Dump unwrapped coordinates
+# (Use these to calculate COM MSD offline)
+# ---------------------------------------------------
+
+dump prod all custom 1000 prod_unwrapped.dump id mol type q xu yu zu vx vy vz
+
+dump_modify prod sort id
+
+# =====================================================================
+# Thermodynamic output
+# =====================================================================
+
+thermo_style custom step temp c_co2_temp ke pe etotal
+
+thermo 1000
+
+# =====================================================================
+# Production simulation
+# =====================================================================
+
+run 5000000
+
+# =====================================================================
+# Save final state
+# =====================================================================
+
+write_restart prod.restart
+
+write_data prod_out.data
+
+print "======================================================="
+print "Stage 3 production completed."
+print "Use prod_unwrapped.dump to calculate molecular COM MSD."
+print "Use msd_quick.txt only as a qualitative diagnostic."
+print "======================================================="
