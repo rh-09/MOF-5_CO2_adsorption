@@ -1,4 +1,4 @@
- 1. System: MOF-5 + CO₂ (UFF/TraPPE)
+   1. System: MOF-5 + CO₂ (UFF/TraPPE)
    2. Ensemble: Grand Canonical Monte Carlo (GCMC)
    3. Production cycles: 50,000
    4. Average CO₂ loading: 19.27 molecules/unit cell
