@@ -1,153 +1,185 @@
-# MOF-5 CO₂ Adsorption and Diffusion Simulation
+# CO₂ Adsorption and Self-Diffusion in MOF-5 using GCMC–MD
 
-This repository contains the complete computational workflow for studying CO₂ adsorption and self-diffusion in the metal–organic framework (MOF-5) using **RASPA2** and **LAMMPS**. The project combines Grand Canonical Monte Carlo (GCMC) simulations with Molecular Dynamics (MD) simulations to investigate CO₂ uptake and transport within the porous framework.
-
----
-
-## Project Workflow
-
-```
-QMOF Database
-      │
-      ▼
-Obtain MOF-5 CIF Structure
-      │
-      ▼
-Generate Force Field Parameters
-(lammps-interface + UFF4MOF)
-      │
-      ▼
-RASPA2 GCMC Simulation
-(CO₂ Adsorption)
-      │
-      ▼
-Convert RASPA Output to LAMMPS
-      │
-      ▼
-Energy Minimization
-      │
-      ▼
-NVT Equilibration
-      │
-      ▼
-NVE Production Run
-      │
-      ▼
-CO₂ Diffusion Analysis
-(MSD & Self-Diffusion Coefficient)
-```
+A computational workflow for investigating CO₂ adsorption and self-diffusion in **MOF-5 (IRMOF-1)** using **RASPA2** and **LAMMPS**. The adsorption equilibrium is obtained from Grand Canonical Monte Carlo (GCMC) simulations, followed by Molecular Dynamics (MD) to evaluate the CO₂ self-diffusion coefficient.
 
 ---
 
-## Repository Structure
+## Overview
 
-```
-.
-├── RAPSA2/                  # RASPA2 input and generated files
-├── diffusion_analysis/      # Python scripts and MSD results
-├── *.cif                    # MOF structure files
-├── *.data                   # LAMMPS data files
-├── *.in                     # LAMMPS input scripts
-├── *.py                     # Analysis scripts
-├── README.md
-└── .gitignore
-```
+This project implements a multiscale **GCMC → MD** workflow:
+
+1. Construct rigid MOF-5 framework.
+2. Perform GCMC adsorption simulations at equilibrium.
+3. Export the equilibrium configuration.
+4. Equilibrate using NVT MD.
+5. Perform NVE production MD.
+6. Compute the CO₂ center-of-mass mean squared displacement (MSD).
+7. Determine the self-diffusion coefficient using the Einstein relation.
 
 ---
 
-## Software Used
+## Software
 
 - RASPA2
-- LAMMPS
-- lammps-interface
+- LAMMPS (22 Jul 2025)
 - Python 3
 - NumPy
 - Matplotlib
-- OVITO (trajectory visualization)
 
 ---
 
-## Simulation Workflow
+## System Description
 
-### 1. Framework Preparation
+| Property | Value |
+|----------|-------|
+| Material | MOF-5 (IRMOF-1) |
+| Framework | Fully rigid |
+| Framework force field | UFF |
+| Adsorbate | CO₂ |
+| CO₂ model | TraPPE (rigid) |
+| Electrostatics | Ewald summation |
+| Simulation cell | 3 × 3 × 2 supercell |
+| Cell dimensions | 55.26 × 55.26 × 36.84 Å³ |
 
-- Obtain the MOF-5 crystal structure from the QMOF database.
-- Generate LAMMPS-compatible files using **lammps-interface** with the **UFF4MOF** force field.
+---
 
-### 2. GCMC Simulation (RASPA2)
+# Workflow
 
-- Temperature: **298 K**
-- Pressure: **1 bar**
-- Adsorbate: **CO₂ (TraPPE model)**
+## Stage 1 — GCMC Adsorption (RASPA2)
 
-The GCMC simulation determines the equilibrium loading of CO₂ inside MOF-5.
+Simulation conditions
 
-### 3. Molecular Dynamics (LAMMPS)
+- Ensemble: μVT (Grand Canonical Monte Carlo)
+- Temperature: 298 K
+- Pressure: 1 bar
+- Initialization cycles: 10,000
+- Production cycles: 50,000
 
-The loaded structure is imported into LAMMPS for diffusion calculations.
+### Results
 
-Simulation sequence:
+| Property | Value |
+|----------|------:|
+| Average CO₂ loading | 19.27 molecules/unit cell |
+| Final configuration | 19 molecules |
+| Adsorption capacity | 30.59 mg g⁻¹ |
+| Loading | 0.6952 mol kg⁻¹ |
+| Host–CO₂ interaction energy | −24,717.20 K |
+| CO₂–CO₂ interaction energy | −471.94 K |
 
-1. Energy Minimization
-2. NVT Equilibration
-3. NVE Production Simulation
+The adsorption loading converged successfully, and the final equilibrium configuration containing **19 CO₂ molecules** was exported for Molecular Dynamics simulations.
 
-The MOF framework is treated as rigid while CO₂ molecules evolve dynamically.
+---
 
-### 4. Post-processing
+## Stage 2 — NVT Equilibration (LAMMPS)
 
-Mean Squared Displacement (MSD) is calculated using Python scripts to determine the self-diffusion coefficient of CO₂.
+Simulation conditions
+
+- Ensemble: NVT
+- Framework: Fully frozen
+- CO₂: TraPPE rigid molecules
+- Time step: 1 fs
+
+Purpose
+
+- Relax the adsorbed configuration
+- Thermalize the adsorbed CO₂ molecules before production dynamics
+
+---
+
+## Stage 3 — Production Diffusion (LAMMPS)
+
+Simulation conditions
+
+- Ensemble: NVE
+- Framework: Frozen
+- CO₂: Rigid (`fix rigid/nve/small`)
+- Time step: 1 fs
+- Production length: 5 ns
+
+### Diffusion Results
+
+| Property | Value |
+|----------|------:|
+| CO₂ molecules | 19 |
+| Diffusive fit window | 500–1461 ps |
+| Self-diffusion coefficient | **1.616 × 10⁻⁴ cm²/s** |
+| Block averaged D | **(1.700 ± 0.178) × 10⁻⁴ cm²/s** |
+| Dx | 1.825 × 10⁻⁴ cm²/s |
+| Dy | 1.911 × 10⁻⁴ cm²/s |
+| Dz | 1.112 × 10⁻⁴ cm²/s |
+| Directional anisotropy | 49.4% |
+
+The diffusion coefficient was calculated from the center-of-mass MSD using the Einstein relation.
 
 ---
 
 ## Analysis
 
-The repository includes scripts for:
+The analysis script performs:
 
-- Reading LAMMPS trajectory files
-- Computing Mean Squared Displacement (MSD)
-- Linear fitting of the diffusive regime
-- Calculating the CO₂ self-diffusion coefficient
-- Plotting diffusion curves
+- Center-of-mass trajectory reconstruction
+- MSD calculation
+- Automatic identification of the Fickian diffusion regime
+- Linear regression of the MSD
+- Block averaging
+- Per-axis diffusion analysis
+- Per-molecule MSD analysis
+
+Generated figures:
+
+- `diffusive_regime_check.png`
+- `msd_vs_time.png`
+- `msd_per_axis.png`
+- `msd_per_molecule.png`
+
+---
+
+## Repository Structure
+
+```text
+.
+├── raspa/
+│   ├── simulation.input
+│   └── output/
+│
+├── lammps/
+│   ├── in.nvt
+│   ├── in.nve
+│   └── restart/
+│
+├── analysis/
+│   ├── diffusion_analysis.py
+│   ├── msd_vs_time.png
+│   ├── msd_per_axis.png
+│   ├── msd_per_molecule.png
+│   └── summary.txt
+│
+└── README.md
+```
 
 ---
 
 ## Notes
 
-Large generated files such as:
-
-- trajectory dumps (`*.dump`)
-- restart files (`*.restart`)
-- RASPA generated Movies/
-- VTK files
-
-are intentionally excluded from version control using `.gitignore`.
+- The MOF-5 framework was treated as completely rigid.
+- Diffusion coefficients correspond to the equilibrium CO₂ loading obtained from GCMC.
+- The reported diffusion coefficient is based on a single 5 ns trajectory.
+- Longer production simulations or multiple independent trajectories are recommended for improved statistical convergence.
 
 ---
 
 ## Citation
 
-If you use this repository in academic work, please cite the appropriate software:
-
-- RASPA2
-- LAMMPS
-- UFF4MOF
-- TraPPE CO₂ Force Field
+If you use this workflow or repository, please cite the associated publication (to be added).
 
 ---
 
 ## Author
 
-**Md. Rakib Hasan**
+**Rakib Hasan**
 
 Department of Electrical and Electronic Engineering (EEE)
 
 Khulna University of Engineering & Technology (KUET)
 
 Bangladesh
-
----
-
-## License
-
-This project is intended for academic and research purposes.
